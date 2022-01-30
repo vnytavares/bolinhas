@@ -1,0 +1,386 @@
+<div>
+    <div style="display: block; margin-bottom: 2px;">
+        <input id="temporizador" type="time" style="font-size: large;  width: 100%; max-width: 500px; text-align: center;" readonly value="00:00:30" step="2">
+        <button onclick="resetarJogo()"><img width="16" height="16" src="https://cdn.iconscout.com/icon/premium/png-256-thumb/reload-1773048-1508990.png" alt="reiniciar jogo"></button>
+    </div>
+    <div>
+        <canvas id="canvas"></canvas>
+        <canvas id="canvasPegou"></canvas>
+    </div>
+    <div style="width: 750px; height: 750px;">
+        <table id="tablePontuacao" style="font-family: 'Courier New', Courier, monospace; width: 100%; max-width: 500px;">
+        </table>
+    </div>
+</div>
+
+<script>
+    // var width = screen.availWidth;
+    // var height = screen.availHeight;
+
+    width = 500;
+    height = width; //manter igual
+    velocidade = 100;
+    var corFundo = 'black';
+    var corBolinha = 'silver';
+    parou = false;
+
+    //tamanho do canvas
+    var canvas = document.querySelector("#canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    //pegando o context e colorindo o fundo
+    var context = canvas.getContext('2d');
+    context.fillStyle = corFundo;
+    context.fillRect(0, 0, width, height);
+
+    function limparFundo() {
+        context.clearRect(0, 0, width, height);
+    }
+
+    function criarBolinha(x , y, raio, cor) {
+        context.fillStyle = cor;
+        context.beginPath();
+        context.arc(x, y, raio, 0, 2 * Math.PI);
+        context.fill();
+    }
+
+    function jogarBolinhasDasBordas() {
+
+        let x = 10;
+        function diretaEsquerdaEmCima() {
+
+            if ((width - x) < 10) { //para quando chega no fim
+                clearInterval(intervalDiretaEsquerdaEmCima);
+                return;
+            }
+
+            if (x != 10) { //apaga o rastro
+                criarBolinha(x - 10, 10, 11, corFundo); 
+            }
+
+            criarBolinha(x, 10, 10, corBolinha);
+            x = x + 10;
+        }
+        //efeito de movimento com interval, o metodo incrementa a variavel de controle do posicionamento
+        var intervalDiretaEsquerdaEmCima = setInterval(diretaEsquerdaEmCima, velocidade);
+
+
+        let y = 10;
+        function cimaBaixoNaDireita() {
+
+            if (y > (height - 10)) { //para quando chega no fim
+                clearInterval(intervalCimaBaixoNaDireita);
+                return;
+            }
+
+            if (y != 10) { //apaga o rastro
+                criarBolinha(width - 10, y - 10, 11, corFundo);
+            }
+
+            criarBolinha(width - 10, y, 10, corBolinha);
+            y = y + 10;
+        }
+        //efeito de movimento com interval, o metodo incrementa a variavel de controle do posicionamento
+        var intervalCimaBaixoNaDireita = setInterval(cimaBaixoNaDireita, velocidade);
+
+
+        let k = height - 10;
+        function baixoCimaNaEsquerda() {
+
+            if (k < 10) { //para quando chega no fim
+                clearInterval(intervalBaixoCimaNaEsquerda);
+                return;
+            }
+
+            if (k != (height - 10)) { //apaga o rastro
+                criarBolinha(10, k + 10, 11, corFundo);
+            }
+
+            criarBolinha(10, k, 10, corBolinha);
+            k = k - 10;
+        }
+        //efeito de movimento com interval, o metodo incrementa a variavel de controle do posicionamento
+        var intervalBaixoCimaNaEsquerda = setInterval(baixoCimaNaEsquerda, velocidade);
+
+
+        let z = width - 10;
+        function esquerdaDireitaEmBaixo() {
+            
+            if (z < 10) { //para quando chega no fim
+                clearInterval(intervalEsquerdaDireitaEmBaixo);
+                jogarBolinhasDasBordas(); //joga as bolinhas novamente pra gerar o looping
+                return;
+            }
+
+            if (z != width - 10) { //apaga o rastro
+                criarBolinha(z + 10, height - 10, 11, corFundo);
+            }
+
+            criarBolinha(z, height - 10, 10, corBolinha);
+            z = z - 10;
+        }
+        //efeito de movimento com interval, o metodo incrementa a variavel de controle do posicionamento
+        var intervalEsquerdaDireitaEmBaixo = setInterval(esquerdaDireitaEmBaixo, velocidade);
+    }
+
+    jogarBolinhasDasBordas();
+
+    function gerarPosicaoAleatoria() { //retorna posicao aleatoria na tela considerando as bordas
+        let valorAleatorio = Math.floor(Math.random() * width);
+
+        if (valorAleatorio > (width - 50)) {
+            return (width - 50);
+        }
+        if (valorAleatorio < 50) {
+            return 50;
+        }
+
+        return valorAleatorio;
+    }
+
+    let xAleatorio;
+    let yAleatorio;
+
+    function jogarBolinhaAleatoria() {
+        if (parou) return;
+
+        criarBolinha(xAleatorio, yAleatorio, 13, corFundo);
+        xAleatorio = gerarPosicaoAleatoria();
+        yAleatorio = gerarPosicaoAleatoria();
+
+        criarBolinha(xAleatorio, yAleatorio, 12, 'yellow');
+        criarBolinha(xAleatorio, yAleatorio, 10, corFundo);
+    }
+
+    jogarBolinhaAleatoria();
+    var intervalJogarBolinhaAleatoria = setInterval(jogarBolinhaAleatoria, 1000);
+
+    pegou = 0;
+    function pegarBolinha(evento) {
+        var x = evento.pageX - canvas.offsetLeft;
+        var y = evento.pageY - canvas.offsetTop;
+
+        if ((x > xAleatorio - 20)
+            && (x < xAleatorio + 20)
+            && (y > yAleatorio - 20)
+            && (y < yAleatorio + 20)) {
+                incrementarPegou();
+                //criarBolinha(xAleatorio, yAleatorio, 20, '#52de77');
+                clearInterval(intervalJogarBolinhaAleatoria);
+                jogarBolinhaAleatoria();
+                intervalJogarBolinhaAleatoria = setInterval(jogarBolinhaAleatoria, 1000);
+        }
+    }
+
+    canvas.onclick = pegarBolinha;
+
+    //canvasPegou
+    var canvasPegou = document.querySelector("#canvasPegou");
+    canvasPegou.width = width;
+    canvasPegou.height = height;
+
+    //pegando o context e colorindo o fundo
+    var contextPegou = canvasPegou.getContext('2d');
+    contextPegou.fillStyle = corBolinha;
+    contextPegou.fillRect(0, 0, width, height);
+
+    function criarBolinhaPegou(x , y, raio, cor) {
+        contextPegou.fillStyle = cor;
+        contextPegou.beginPath();
+        contextPegou.arc(x, y, raio, 0, 2 * Math.PI);
+        contextPegou.fill();
+    }
+
+    //bolinha aleatoria pegou
+
+    function jogarBolinhasDasBordasPegou() {
+
+        let x = 10;
+        function diretaEsquerdaEmCima() {
+
+        if ((width - x) < 10) { //para quando chega no fim
+            clearInterval(intervalDiretaEsquerdaEmCima);
+            return;
+        }
+
+        if (x != 10) { //apaga o rastro
+            criarBolinhaPegou(x - 10, 10, 11, corBolinha); 
+        }
+
+        criarBolinhaPegou(x, 10, 10, corFundo);
+        x = x + 10;
+        }
+        //efeito de movimento com interval, o metodo incrementa a variavel de controle do posicionamento
+        var intervalDiretaEsquerdaEmCima = setInterval(diretaEsquerdaEmCima, velocidade);
+
+
+        let y = 10;
+        function cimaBaixoNaDireita() {
+
+            if (y > (height - 10)) { //para quando chega no fim
+                clearInterval(intervalCimaBaixoNaDireita);
+                return;
+            }
+
+            if (y != 10) { //apaga o rastro
+                criarBolinhaPegou(width - 10, y - 10, 11, corBolinha);
+            }
+
+            criarBolinhaPegou(width - 10, y, 10, corFundo);
+            y = y + 10;
+        }
+        //efeito de movimento com interval, o metodo incrementa a variavel de controle do posicionamento
+        var intervalCimaBaixoNaDireita = setInterval(cimaBaixoNaDireita, velocidade);
+
+
+        let k = height - 10;
+        function baixoCimaNaEsquerda() {
+
+            if (k < 10) { //para quando chega no fim
+                clearInterval(intervalBaixoCimaNaEsquerda);
+                return;
+            }
+
+            if (k != (height - 10)) { //apaga o rastro
+                criarBolinhaPegou(10, k + 10, 11, corBolinha);
+            }
+
+            criarBolinhaPegou(10, k, 10, corFundo);
+            k = k - 10;
+        }
+        //efeito de movimento com interval, o metodo incrementa a variavel de controle do posicionamento
+        var intervalBaixoCimaNaEsquerda = setInterval(baixoCimaNaEsquerda, velocidade);
+
+
+        let z = width - 10;
+        function esquerdaDireitaEmBaixo() {
+            
+            if (z < 10) { //para quando chega no fim
+                clearInterval(intervalEsquerdaDireitaEmBaixo);
+                jogarBolinhasDasBordasPegou(); //joga as bolinhas novamente pra gerar o looping
+                return;
+            }
+
+            if (z != width - 10) { //apaga o rastro
+                criarBolinhaPegou(z + 10, height - 10, 11, corBolinha);
+            }
+
+            criarBolinhaPegou(z, height - 10, 10, corFundo);
+            z = z - 10;
+        }
+        //efeito de movimento com interval, o metodo incrementa a variavel de controle do posicionamento
+        var intervalEsquerdaDireitaEmBaixo = setInterval(esquerdaDireitaEmBaixo, velocidade);
+    }
+
+    function incrementarPegou() {
+        if (pegou == 0) iniciarTemporizador();
+        pegou++;
+        criarBolinhaPegou(xAleatorio, yAleatorio, 10, corFundo);
+
+    }
+
+    jogarBolinhasDasBordasPegou();
+
+    function retornaTempoEmSegundos(time) {
+        if (!time) return 0;
+
+        var separador = time.split(':');
+        tempo = 0;
+        tempo = separador[0] > 0 ? separador[0] * 3600 : 0;
+        tempo += separador[1] > 0 ? separador[1] * 60 : 0;
+        tempo += separador[2] * 1;
+
+        return tempo;
+    }
+
+    function retornaSegundosEmTempo(segundos) {
+        if (!segundos) return "00:00:00";
+
+        var segundosTempo = segundos % 60;
+        var minutosTempo = Math.floor((segundos / 60) % 60);
+        let minutos = (segundos / 60);
+        var horasTempo = minutos >= 60 ? Math.floor(minutos/60) : 0;
+
+        segundosTempo = segundosTempo < 10 ? "0" + segundosTempo : segundosTempo;
+        minutosTempo = minutosTempo < 10 ? "0" + minutosTempo : minutosTempo;
+        horasTempo = horasTempo < 10 ? "0" + horasTempo : horasTempo;
+        
+        var tempo = horasTempo + ":" + minutosTempo + ":" + segundosTempo;
+        return tempo;
+    }
+
+    var segundosTemporizador = 0;
+
+    function iniciarTemporizador() {
+        velocidade = 10;
+        var temporizador = document.querySelector('#temporizador');
+
+        segundosTemporizador = retornaTempoEmSegundos(temporizador.value);
+
+        var intervalTemporizador = setInterval(() => {
+            segundosTemporizador--;
+            let valueTime = retornaSegundosEmTempo(segundosTemporizador);
+            temporizador.value = valueTime;
+            if (segundosTemporizador == 0) {
+                parou = true;
+                xAleatorio = 0;
+                yAleatorio = 0;
+                resetarPainel();
+                velocidade = 100;
+                clearInterval(intervalTemporizador);
+                salvarPontuacao();
+
+            }
+        }, 1000);
+    }
+
+    function resetarPainel() {
+        context.fillStyle = corFundo;
+        context.fillRect(0, 0, width, height);
+    }
+
+    function resetarPainelPegou() {
+        contextPegou.fillStyle = corBolinha;
+        contextPegou.fillRect(0, 0, width, height);
+    }
+
+    function resetarJogo() {
+        resetarPainel();
+        resetarPainelPegou();
+        temporizador.value = "00:00:30";
+        parou = false;
+    }
+
+    function salvarPontuacao() {
+        var pontuacao = {
+            pontuacao: pegou,
+            dataHora: Date.now()
+        }
+        pegou = 0;
+        mostrarPontuacaoTabela(pontuacao);
+    }
+
+    function mostrarPontuacaoTabela(pontuacao) {
+        var pontuacaoTr = document.createElement('tr');
+
+        var tdPontuacao = document.createElement('td');
+        var tdDataHora = document.createElement('td');
+        var tdFlexa = document.createElement('td');
+
+        tdPontuacao.textContent = pontuacao.pontuacao;
+        tdDataHora.textContent = new Date(pontuacao.dataHora).toLocaleString();
+        tdFlexa.textContent = "--->";
+
+        pontuacaoTr.appendChild(tdPontuacao);
+        pontuacaoTr.appendChild(tdFlexa);
+        pontuacaoTr.appendChild(tdDataHora);
+
+        var tablePontuacao = document.querySelector('#tablePontuacao');
+
+        tablePontuacao.appendChild(pontuacaoTr);       
+        
+    }
+    
+
+</script>
