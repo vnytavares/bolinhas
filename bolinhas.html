@@ -21,7 +21,7 @@
     height = width; //manter igual
     velocidade = 100;
     var corFundo = 'black';
-    var corBolinha = 'silver';
+    var corBolinha = 'gold';
     parou = false;
 
     //tamanho do canvas
@@ -145,12 +145,13 @@
     function jogarBolinhaAleatoria() {
         if (parou) return;
 
-        criarBolinha(xAleatorio, yAleatorio, 13, corFundo);
+        criarBolinha(xAleatorio, yAleatorio, 21, corFundo);
         xAleatorio = gerarPosicaoAleatoria();
         yAleatorio = gerarPosicaoAleatoria();
 
-        criarBolinha(xAleatorio, yAleatorio, 12, 'yellow');
-        criarBolinha(xAleatorio, yAleatorio, 10, corFundo);
+        criarBolinha(xAleatorio, yAleatorio, 20, corBolinha);
+        criarBolinha(xAleatorio, yAleatorio, 15, corFundo);
+        criarBolinha(xAleatorio, yAleatorio, 10, corBolinha);
     }
 
     jogarBolinhaAleatoria();
@@ -276,7 +277,7 @@
     function incrementarPegou() {
         if (pegou == 0) iniciarTemporizador();
         pegou++;
-        criarBolinhaPegou(xAleatorio, yAleatorio, 10, corFundo);
+        criarBolinhaPegou(xAleatorio, yAleatorio, 15, corFundo);
 
     }
 
